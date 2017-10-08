@@ -1,107 +1,91 @@
 " Maps <C-h/j/k/l> to switch vim splits in the given direction. If there are
-" no more windows in that direction, forwards the operation to tmux.
-" Additionally, <C-\> toggles between last active vim splits/tmux panes.
+" no more windows in that direction, forwards the operation to chunkwm.
 
-if exists("g:loaded_tmux_navigator") || &cp || v:version < 700
+if exists("g:loaded_chunkwm_navigator") || &cp || v:version < 700
   finish
 endif
-let g:loaded_tmux_navigator = 1
+let g:loaded_chunkwm_navigator = 1
 
-if !exists("g:tmux_navigator_save_on_switch")
-  let g:tmux_navigator_save_on_switch = 0
+let s:direction_map = {
+      \ 'h': 'west',
+      \ 'j': 'south',
+      \ 'k': 'north',
+      \ 'l': 'east'
+\ }
+
+if !exists('g:chunkwm_navigator_save_on_switch')
+  let g:chunkwm_navigator_save_on_switch = 0
 endif
 
-if !exists("g:tmux_navigator_disable_when_zoomed")
-  let g:tmux_navigator_disable_when_zoomed = 0
-endif
-
-function! s:TmuxOrTmateExecutable()
-  return (match($TMUX, 'tmate') != -1 ? 'tmate' : 'tmux')
+function! s:ChunkwmExecutable()
+  return 'chunkc'
 endfunction
 
-function! s:UseTmuxNavigatorMappings()
-  return !get(g:, 'tmux_navigator_no_mappings', 0)
+function! s:UseChunkwmNavigatorMappings()
+  return !get(g:, 'chunkwm_navigator_no_mappings', 0)
 endfunction
 
-function! s:InTmuxSession()
-  return $TMUX != ''
+function! s:InChunkwmSession()
+  let l:cmd = 'command -v chunkc'
+  let l:_ = system(l:cmd)
+  if v:shell_error != 0
+    return 0
+  endif
+  let l:_ = system('chunkc tiling::query --window name')
+  if v:shell_error != 0
+    return 0
+  endif
+  return 1
 endfunction
 
-function! s:TmuxVimPaneIsZoomed()
-  return s:TmuxCommand("display-message -p '#{window_zoomed_flag}'") == 1
+function! s:ChunkwmCommand(args)
+  let l:cmd = s:ChunkwmExecutable() . ' ' . a:args
+  return system(l:cmd)
 endfunction
 
-function! s:TmuxSocket()
-  " The socket path is the first value in the comma-separated list of $TMUX.
-  return split($TMUX, ',')[0]
-endfunction
-
-function! s:TmuxCommand(args)
-  let cmd = s:TmuxOrTmateExecutable() . ' -S ' . s:TmuxSocket() . ' ' . a:args
-  return system(cmd)
-endfunction
-
-function! s:TmuxPaneCurrentCommand()
-  echo s:TmuxCommand("display-message -p '#{pane_current_command}'")
-endfunction
-command! TmuxPaneCurrentCommand call s:TmuxPaneCurrentCommand()
-
-let s:tmux_is_last_pane = 0
-augroup tmux_navigator
+let s:chunkwm_is_last_pane = 0
+augroup chunkwm_navigator
   au!
-  autocmd WinEnter * let s:tmux_is_last_pane = 0
+  autocmd WinEnter * let s:chunkwm_is_last_pane = 0
 augroup END
 
-" Like `wincmd` but also change tmux panes instead of vim windows when needed.
-function! s:TmuxWinCmd(direction)
-  if s:InTmuxSession()
-    call s:TmuxAwareNavigate(a:direction)
+" Like `wincmd` but also change chunkwm panes instead of vim windows when needed.
+function! s:ChunkwmWinCmd(direction)
+  if s:InChunkwmSession()
+    call s:ChunkwmAwareNavigate(a:direction)
   else
     call s:VimNavigate(a:direction)
   endif
 endfunction
 
-function! s:NeedsVitalityRedraw()
-  return exists('g:loaded_vitality') && v:version < 704 && !has("patch481")
+function! s:ShouldForwardNavigationBackToChunkwm(chunkwm_last_pane, at_tab_page_edge)
+  return a:chunkwm_last_pane || a:at_tab_page_edge
 endfunction
 
-function! s:ShouldForwardNavigationBackToTmux(tmux_last_pane, at_tab_page_edge)
-  if g:tmux_navigator_disable_when_zoomed && s:TmuxVimPaneIsZoomed()
-    return 0
-  endif
-  return a:tmux_last_pane || a:at_tab_page_edge
-endfunction
-
-function! s:TmuxAwareNavigate(direction)
+function! s:ChunkwmAwareNavigate(direction)
   let nr = winnr()
-  let tmux_last_pane = (a:direction == 'p' && s:tmux_is_last_pane)
-  if !tmux_last_pane
-    call s:VimNavigate(a:direction)
-  endif
+  call s:VimNavigate(a:direction)
   let at_tab_page_edge = (nr == winnr())
-  " Forward the switch panes command to tmux if:
-  " a) we're toggling between the last tmux pane;
+  " Forward the switch panes command to chunkwm if:
+  " a) we're toggling between the last chunkwm pane;
   " b) we tried switching windows in vim but it didn't have effect.
-  if s:ShouldForwardNavigationBackToTmux(tmux_last_pane, at_tab_page_edge)
-    if g:tmux_navigator_save_on_switch == 1
+  if at_tab_page_edge
+    if g:chunkwm_navigator_save_on_switch == 1
       try
         update " save the active buffer. See :help update
       catch /^Vim\%((\a\+)\)\=:E32/ " catches the no file name error
       endtry
-    elseif g:tmux_navigator_save_on_switch == 2
+    elseif g:chunkwm_navigator_save_on_switch == 2
       try
         wall " save all the buffers. See :help wall
       catch /^Vim\%((\a\+)\)\=:E141/ " catches the no file name error
       endtry
     endif
-    let args = 'select-pane -t ' . shellescape($TMUX_PANE) . ' -' . tr(a:direction, 'phjkl', 'lLDUR')
-    silent call s:TmuxCommand(args)
-    if s:NeedsVitalityRedraw()
-      redraw!
-    endif
-    let s:tmux_is_last_pane = 1
+    let args = 'tiling::window --focus ' . get(s:direction_map, a:direction, '')
+    silent call s:ChunkwmCommand(args)
+    let s:chunkwm_is_last_pane = 1
   else
-    let s:tmux_is_last_pane = 0
+    let s:chunkwm_is_last_pane = 0
   endif
 endfunction
 
@@ -113,16 +97,16 @@ function! s:VimNavigate(direction)
   endtry
 endfunction
 
-command! TmuxNavigateLeft call s:TmuxWinCmd('h')
-command! TmuxNavigateDown call s:TmuxWinCmd('j')
-command! TmuxNavigateUp call s:TmuxWinCmd('k')
-command! TmuxNavigateRight call s:TmuxWinCmd('l')
-command! TmuxNavigatePrevious call s:TmuxWinCmd('p')
+command! ChunkwmNavigateLeft call s:ChunkwmWinCmd('h')
+command! ChunkwmNavigateDown call s:ChunkwmWinCmd('j')
+command! ChunkwmNavigateUp call s:ChunkwmWinCmd('k')
+command! ChunkwmNavigateRight call s:ChunkwmWinCmd('l')
+command! ChunkwmNavigatePrevious call s:ChunkwmWinCmd('p')
 
-if s:UseTmuxNavigatorMappings()
-  nnoremap <silent> <c-h> :TmuxNavigateLeft<cr>
-  nnoremap <silent> <c-j> :TmuxNavigateDown<cr>
-  nnoremap <silent> <c-k> :TmuxNavigateUp<cr>
-  nnoremap <silent> <c-l> :TmuxNavigateRight<cr>
-  nnoremap <silent> <c-\> :TmuxNavigatePrevious<cr>
+if s:UseChunkwmNavigatorMappings()
+  nnoremap <silent> <c-h> :ChunkwmNavigateLeft<cr>
+  nnoremap <silent> <c-j> :ChunkwmNavigateDown<cr>
+  nnoremap <silent> <c-k> :ChunkwmNavigateUp<cr>
+  nnoremap <silent> <c-l> :ChunkwmNavigateRight<cr>
+  nnoremap <silent> <c-\> :ChunkwmNavigatePrevious<cr>
 endif
