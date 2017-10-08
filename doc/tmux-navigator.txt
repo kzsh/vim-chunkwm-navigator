@@ -1,33 +1,32 @@
-*tmux-navigator.txt* Plugin to allow seamless navigation between tmux and vim
+chunkwm-navigator.txt* Plugin to allow seamless navigation between chunkwm
+windows and vim
 
 ==============================================================================
-CONTENTS                               *tmux-navigator-contents*
+CONTENTS                               *chunkwm-navigator-contents*
 
 
 ==============================================================================
-INTRODUCTION                           *tmux-navigator*
+INTRODUCTION                           *chunkwm-navigator*
 
-Vim-tmux-navigator is a little plugin which enables seamless navigation
-between tmux panes and vim splits. This plugin is a repackaging of Mislav
-Marohinc's tmux=navigator configuration. When combined with a set of tmux key
-bindings, the plugin will allow you to navigate seamlessly between vim and
-tmux splits using a consistent set of hotkeys.
-
-NOTE: This requires tmux v1.8 or higher.
+Vim-chunkwm-navigator is a plugin that enables seamless navigation
+between chunkwm (MacOS) windows and vim splits. This plugin is a repackaging
+of vim-tmux-navigator by Chris Toomey which itself is a repackaging of Mislav
+Marohinc's tmux-navigator configuration. When combined with a like set of
+chunkwm/skhd key bindings, the plugin will allow you to navigate seamlessly
+between vim and chunkwm windows using the same hotkeys.
 
 ==============================================================================
-CONFIGURATION                             *tmux-navigator-configuration*
-
+CONFIGURATION                          *chunkwm-configuration*
 * Activate autoupdate on exit
- let g:tmux_navigator_save_on_switch = 1
+ let g:chunkwm_navigator_save_on_switch = 1
 
 * Custom Key Bindings
- let g:tmux_navigator_no_mappings = 1
+ let g:chunkwm_navigator_no_mappings = 1
 
- nnoremap <silent> {Left-mapping} :TmuxNavigateLeft<cr>
- nnoremap <silent> {Down-Mapping} :TmuxNavigateDown<cr>
- nnoremap <silent> {Up-Mapping} :TmuxNavigateUp<cr>
- nnoremap <silent> {Right-Mapping} :TmuxNavigateRight<cr>
- nnoremap <silent> {Previous-Mapping} :TmuxNavigatePrevious<cr>
+ nnoremap <silent> {Left-mapping} :ChunkwmNavigateLeft<cr>
+ nnoremap <silent> {Down-Mapping} :ChunkwmNavigateDown<cr>
+ nnoremap <silent> {Up-Mapping} :ChunkwmNavigateUp<cr>
+ nnoremap <silent> {Right-Mapping} :ChunkwmNavigateRight<cr>
+ nnoremap <silent> {Previous-Mapping} :ChunkwmNavigatePrevious<cr>
 
  vim:tw=78:ts=8:ft=help:norl:
