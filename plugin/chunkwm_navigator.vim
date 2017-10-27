@@ -103,8 +103,8 @@ command! ChunkwmNavigateUp call s:ChunkwmWinCmd('k')
 command! ChunkwmNavigateRight call s:ChunkwmWinCmd('l')
 
 if s:UseChunkwmNavigatorMappings()
-  nnoremap <silent> <c-h> :ChunkwmNavigateLeft<cr>
-  nnoremap <silent> <c-j> :ChunkwmNavigateDown<cr>
-  nnoremap <silent> <c-k> :ChunkwmNavigateUp<cr>
-  nnoremap <silent> <c-l> :ChunkwmNavigateRight<cr>
+  nnoremap <silent> <c-s-h> :ChunkwmNavigateLeft<cr>
+  nnoremap <silent> <c-s-j> :ChunkwmNavigateDown<cr>
+  nnoremap <silent> <c-s-k> :ChunkwmNavigateUp<cr>
+  nnoremap <silent> <c-s-l> :ChunkwmNavigateRight<cr>
 endif
