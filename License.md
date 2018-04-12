@@ -1,6 +1,7 @@
 MIT License
 
-Copyright (c) 2017 Andrew Hunt
+Original work Copyright (c) 2017 Chris Toomey
+Modified work Copyright (c) 2018 Andrew Hunt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
