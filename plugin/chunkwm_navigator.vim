@@ -1,9 +1,10 @@
 " Maps <C-h/j/k/l> to switch vim splits in the given direction. If there are
 " no more windows in that direction, forwards the operation to chunkwm.
 
-if exists("g:loaded_chunkwm_navigator") || &cp || v:version < 700
+if exists('g:loaded_chunkwm_navigator') || &cp || v:version < 700
   finish
 endif
+
 let g:loaded_chunkwm_navigator = 1
 
 let s:direction_map = {
