@@ -13,10 +13,6 @@ let s:direction_map = {
       \ 'l': 'east'
 \ }
 
-if !exists('g:chunkwm_navigator_save_on_switch')
-  let g:chunkwm_navigator_save_on_switch = 0
-endif
-
 function! s:ChunkwmExecutable()
   return 'chunkc'
 endfunction
@@ -70,17 +66,6 @@ function! s:ChunkwmAwareNavigate(direction)
   " a) we're toggling between the last chunkwm pane;
   " b) we tried switching windows in vim but it didn't have effect.
   if at_tab_page_edge
-    if g:chunkwm_navigator_save_on_switch == 1
-      try
-        update " save the active buffer. See :help update
-      catch /^Vim\%((\a\+)\)\=:E32/ " catches the no file name error
-      endtry
-    elseif g:chunkwm_navigator_save_on_switch == 2
-      try
-        wall " save all the buffers. See :help wall
-      catch /^Vim\%((\a\+)\)\=:E141/ " catches the no file name error
-      endtry
-    endif
     let args = 'tiling::window --focus ' . get(s:direction_map, a:direction, '')
     silent call s:ChunkwmCommand(args)
     let s:chunkwm_is_last_pane = 1
